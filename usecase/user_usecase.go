@@ -19,7 +19,6 @@ type UserService interface {
 }
 
 type UserUsecase interface {
-	UpsertUser(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetUserBySubID(ctx context.Context, subID string) (*domain.User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
@@ -31,10 +30,6 @@ type userUsecase struct {
 
 func NewUserUsecase(userRepository domain.UserRepository) UserUsecase {
 	return &userUsecase{userRepository: userRepository}
-}
-
-func (u *userUsecase) UpsertUser(ctx context.Context, user *domain.User) (*domain.User, error) {
-	return u.userRepository.UpsertUser(ctx, user)
 }
 
 func (u *userUsecase) GetUserBySubID(ctx context.Context, subID string) (*domain.User, error) {
