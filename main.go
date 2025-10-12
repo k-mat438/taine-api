@@ -45,6 +45,7 @@ func main() {
 	userRepository := postgres.NewUserRepository(db.DB)
 	orgRepository := postgres.NewOrganizationRepository(db.DB)
 	membershipRepository := postgres.NewMembershipRepository(db.DB)
+	tweetRepository := postgres.NewTweetRepository(db.DB)
 
 	// サービスの初期化
 	userService := usecase.NewUserService(userRepository)
@@ -58,9 +59,24 @@ func main() {
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	userHandler := handler.NewUserHandler(userUsecase)
 
+	tweetUsecase := usecase.NewTweetUsecase(tweetRepository, userRepository)
+	tweetHandler := handler.NewTweetHandler(tweetUsecase, userUsecase)
+
 	router.GET("/api/health", func(c *gin.Context) { c.JSON(200, gin.H{"message": "OK"}) })
 
+	// テスト用: 認証なしでアクセスできるエンドポイント
+	router.GET("/api/test/tweets", tweetHandler.GetTweetsTest)
+
 	api := router.Group("/api/v1", middleware.ClerkSessionAuth())
-	api.GET("/me", userHandler.UpsertUser)
+	api.GET("/me", userHandler.GetUserBySubID)
+
+	// Tweet routes
+	api.POST("/tweets", tweetHandler.CreateTweet)
+	api.GET("/tweets", tweetHandler.GetTweets)      // 全てのtweetを取得（認証テスト用）
+	api.GET("/tweets/my", tweetHandler.GetMyTweets) // 自分のtweetのみ取得
+	api.GET("/tweets/:id", tweetHandler.GetTweetByID)
+	api.PUT("/tweets/:id", tweetHandler.UpdateTweet)
+	api.DELETE("/tweets/:id", tweetHandler.DeleteTweet)
+
 	router.Run(":8080")
 }
