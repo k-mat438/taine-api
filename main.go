@@ -6,7 +6,6 @@ import (
 	"taine-api/handler"
 	"taine-api/infra"
 	"taine-api/infra/postgres"
-	"taine-api/interface/middleware"
 	"taine-api/usecase"
 
 	"github.com/gin-contrib/cors"
@@ -57,7 +56,7 @@ func main() {
 	router.POST("/webhooks/clerk", webhookHandler.Clerk)
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
-	userHandler := handler.NewUserHandler(userUsecase)
+	// userHandler := handler.NewUserHandler(userUsecase)
 
 	tweetUsecase := usecase.NewTweetUsecase(tweetRepository, userRepository)
 	tweetHandler := handler.NewTweetHandler(tweetUsecase, userUsecase)
@@ -67,16 +66,16 @@ func main() {
 	// テスト用: 認証なしでアクセスできるエンドポイント
 	router.GET("/api/test/tweets", tweetHandler.GetTweetsTest)
 
-	api := router.Group("/api/v1", middleware.ClerkSessionAuth())
-	api.GET("/me", userHandler.GetUserBySubID)
+	// api := router.Group("/api/v1", middleware.ClerkSessionAuth())
+	// api.GET("/me", userHandler.GetUserBySubID)
 
-	// Tweet routes
-	api.POST("/tweets", tweetHandler.CreateTweet)
-	api.GET("/tweets", tweetHandler.GetTweets)      // 全てのtweetを取得（認証テスト用）
-	api.GET("/tweets/my", tweetHandler.GetMyTweets) // 自分のtweetのみ取得
-	api.GET("/tweets/:id", tweetHandler.GetTweetByID)
-	api.PUT("/tweets/:id", tweetHandler.UpdateTweet)
-	api.DELETE("/tweets/:id", tweetHandler.DeleteTweet)
+	// // Tweet routes
+	// api.POST("/tweets", tweetHandler.CreateTweet)
+	// api.GET("/tweets", tweetHandler.GetTweets)      // 全てのtweetを取得（認証テスト用）
+	// api.GET("/tweets/my", tweetHandler.GetMyTweets) // 自分のtweetのみ取得
+	// api.GET("/tweets/:id", tweetHandler.GetTweetByID)
+	// api.PUT("/tweets/:id", tweetHandler.UpdateTweet)
+	// api.DELETE("/tweets/:id", tweetHandler.DeleteTweet)
 
 	router.Run(":8080")
 }
