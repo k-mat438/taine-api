@@ -17,7 +17,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file found (using environment variables)")
 	}
 
 	allowed := os.Getenv("ALLOWED_ORIGIN")
@@ -27,7 +27,7 @@ func main() {
 
 	db, err := infra.NewDB(os.Getenv("DATABASE_DSN"))
 	if err != nil {
-		log.Fatal("Error connecting to database")
+		log.Fatal("Error connecting to database: ", err)
 	}
 
 	router := gin.New()
