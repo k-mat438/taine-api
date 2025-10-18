@@ -18,7 +18,7 @@ type OrganizationMember struct {
 
 // TableName returns the table name for the OrganizationMember model
 func (OrganizationMember) TableName() string {
-	return "user_organization_memberships"
+	return "organization_members"
 }
 
 // Role constants

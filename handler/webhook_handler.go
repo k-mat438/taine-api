@@ -109,7 +109,24 @@ func (h *WebhookHandler) Clerk(c *gin.Context) {
 		}
 
 	// -------- organizations --------
-	case "organization.created", "organization.updated":
+	case "organization.created":
+		var d struct {
+			ID        string `json:"id"`         // Clerk org id
+			Name      string `json:"name"`       // Org名
+			CreatedBy string `json:"created_by"` // 作成者のClerk user id
+			// Slug等が必要なら追加
+		}
+		if err := json.Unmarshal(evt.Data, &d); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid org payload"})
+			return
+		}
+		// 組織作成時は作成者をownerとして追加
+		if err := h.OrgSvc.UpsertByExternalIDWithCreator(c.Request.Context(), d.ID, d.Name, d.CreatedBy); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "org create with owner failed"})
+			return
+		}
+
+	case "organization.updated":
 		var d struct {
 			ID   string `json:"id"`   // Clerk org id
 			Name string `json:"name"` // Org名
@@ -119,8 +136,9 @@ func (h *WebhookHandler) Clerk(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid org payload"})
 			return
 		}
+		// 組織更新時は組織情報のみ更新
 		if err := h.OrgSvc.UpsertByExternalID(c.Request.Context(), d.ID, d.Name); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "org upsert failed"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "org update failed"})
 			return
 		}
 

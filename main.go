@@ -49,7 +49,7 @@ func main() {
 
 	// サービスの初期化
 	userService := usecase.NewUserService(userRepository)
-	orgService := usecase.NewOrganizationSvc(orgRepository)
+	orgService := usecase.NewOrganizationSvc(orgRepository, userRepository, membershipRepository)
 	membershipService := usecase.NewMembershipSvc(membershipRepository, userRepository, orgRepository)
 
 	// ハンドラーの初期化
