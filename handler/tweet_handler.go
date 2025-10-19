@@ -29,7 +29,7 @@ type UpdateTweetRequest struct {
 func (h *TweetHandler) CreateTweet(c *gin.Context) {
 	subID := c.GetString("sub_id")
 	user, err := h.userUsecase.GetUserBySubID(c.Request.Context(), subID)
-	if err != nil {
+	if err != nil || user == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 		return
 	}
@@ -71,7 +71,7 @@ func (h *TweetHandler) GetTweets(c *gin.Context) {
 func (h *TweetHandler) GetMyTweets(c *gin.Context) {
 	subID := c.GetString("sub_id")
 	user, err := h.userUsecase.GetUserBySubID(c.Request.Context(), subID)
-	if err != nil {
+	if err != nil || user == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 		return
 	}
@@ -107,7 +107,7 @@ func (h *TweetHandler) GetTweetByID(c *gin.Context) {
 func (h *TweetHandler) UpdateTweet(c *gin.Context) {
 	subID := c.GetString("sub_id")
 	user, err := h.userUsecase.GetUserBySubID(c.Request.Context(), subID)
-	if err != nil {
+	if err != nil || user == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 		return
 	}
@@ -145,7 +145,7 @@ func (h *TweetHandler) UpdateTweet(c *gin.Context) {
 func (h *TweetHandler) DeleteTweet(c *gin.Context) {
 	subID := c.GetString("sub_id")
 	user, err := h.userUsecase.GetUserBySubID(c.Request.Context(), subID)
-	if err != nil {
+	if err != nil || user == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 		return
 	}

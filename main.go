@@ -8,6 +8,7 @@ import (
 	"taine-api/infra/postgres"
 	"taine-api/interface/middleware"
 	"taine-api/usecase"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -35,9 +36,11 @@ func main() {
 
 	// CORS（Nextのオリジンだけ許可）
 	cfg := cors.Config{
-		AllowOrigins: []string{allowed},
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{"Authorization", "Content-Type"},
+		AllowOrigins:     []string{allowed},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour, // プリフライト結果を12時間キャッシュ
 	}
 	router.Use(cors.New(cfg))
 
@@ -46,11 +49,13 @@ func main() {
 	orgRepository := postgres.NewOrganizationRepository(db.DB)
 	membershipRepository := postgres.NewMembershipRepository(db.DB)
 	tweetRepository := postgres.NewTweetRepository(db.DB)
+	wishRepository := postgres.NewWishRepository(db.DB)
 
 	// サービスの初期化
 	userService := usecase.NewUserService(userRepository)
 	orgService := usecase.NewOrganizationSvc(orgRepository, userRepository, membershipRepository)
 	membershipService := usecase.NewMembershipSvc(membershipRepository, userRepository, orgRepository)
+	wishService := usecase.NewWishSvc(wishRepository, orgRepository)
 
 	// ハンドラーの初期化
 	webhookHandler := handler.NewWebhookHandler(userService, orgService, membershipService)
@@ -62,10 +67,9 @@ func main() {
 	tweetUsecase := usecase.NewTweetUsecase(tweetRepository, userRepository)
 	tweetHandler := handler.NewTweetHandler(tweetUsecase, userUsecase)
 
-	router.GET("/api/health", func(c *gin.Context) { c.JSON(200, gin.H{"message": "OK"}) })
+	wishHandler := handler.NewWishHandler(wishService, userUsecase)
 
-	// テスト用: 認証なしでアクセスできるエンドポイント
-	router.GET("/api/test/tweets", tweetHandler.GetTweetsTest)
+	router.GET("/api/health", func(c *gin.Context) { c.JSON(200, gin.H{"message": "OK"}) })
 
 	api := router.Group("/api/v1", middleware.ClerkSessionAuth())
 	api.GET("/me", userHandler.GetUserBySubID)
@@ -77,6 +81,16 @@ func main() {
 	api.GET("/tweets/:id", tweetHandler.GetTweetByID)
 	api.PUT("/tweets/:id", tweetHandler.UpdateTweet)
 	api.DELETE("/tweets/:id", tweetHandler.DeleteTweet)
+
+	// Wish routes
+	api.GET("/wishes", wishHandler.GetWishesForCurrentOrg) // JWTのorg_external_idを使用
+	api.POST("/wish", wishHandler.CreateWish)
+	api.GET("/wish/:id", wishHandler.GetWish)
+	api.PUT("/wish/:id", wishHandler.UpdateWish)
+	api.DELETE("/wish/:id", wishHandler.DeleteWish)
+	api.POST("/wish/:id/soft-delete", wishHandler.SoftDeleteWish)
+	api.POST("/wish/:id/restore", wishHandler.RestoreWish)
+	api.PATCH("/wish/:id/order", wishHandler.UpdateWishOrder)
 
 	router.Run(":8080")
 }

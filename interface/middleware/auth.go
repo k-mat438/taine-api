@@ -33,8 +33,12 @@ func ClerkSessionAuth() gin.HandlerFunc {
 		raw := strings.TrimPrefix(ah, "Bearer ")
 
 		token, err := jwt.Parse(raw, jwks.Keyfunc)
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(401, gin.H{"error": "invalid token"})
+		if err != nil {
+			c.AbortWithStatusJSON(401, gin.H{"error": "invalid token", "details": err.Error()})
+			return
+		}
+		if !token.Valid {
+			c.AbortWithStatusJSON(401, gin.H{"error": "token is not valid"})
 			return
 		}
 
@@ -59,6 +63,15 @@ func ClerkSessionAuth() gin.HandlerFunc {
 		if sub, _ := claims["sub"].(string); sub != "" {
 			c.Set("sub_id", sub)
 		}
+
+		// JWT templateで追加したカスタムクレームを取得
+		if orgID, _ := claims["org_id"].(string); orgID != "" {
+			c.Set("org_external_id", orgID)
+		}
+		if orgRole, _ := claims["org_role"].(string); orgRole != "" {
+			c.Set("org_role", orgRole)
+		}
+
 		c.Next()
 	}
 }
